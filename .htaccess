@@ -1,0 +1,73 @@
+# Archivo .htaccess para el sistema de credenciales
+# Guarda como .htaccess (sin extensión)
+
+RewriteEngine On
+Options -Indexes
+
+# URL base del sistema
+RewriteBase /sistema_credenciales/
+
+# Redireccionar URLs amigables para verificación
+RewriteRule ^v/([a-zA-Z0-9\-]+)$ verificar.php?codigo=$1 [L,QSA]
+RewriteRule ^c/([a-zA-Z0-9\-]+)$ credencial.php?codigo=$1 [L,QSA]
+RewriteRule ^qr/([a-zA-Z0-9\-]+)$ verificar.php?codigo=$1 [L,QSA]
+
+# Proteger directorios sensibles
+RewriteRule ^database/ - [F,L]
+RewriteRule ^includes/ - [F,L]
+RewriteRule ^config\.php$ - [F,L]
+RewriteRule ^funciones\.php$ - [F,L]
+
+# Permitir acceso a uploads
+RewriteRule ^uploads/ - [L]
+
+# Comprimir salida para mejor rendimiento
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Configurar cache para archivos estáticos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# Prevenir acceso a archivos .db
+<FilesMatch "\.db$">
+    Deny from all
+</FilesMatch>
+
+# Configuración de seguridad
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options nosniff
+    Header set X-Frame-Options DENY
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Manejo de errores personalizados
+ErrorDocument 404 /sistema_credenciales/verificar.php
+ErrorDocument 403 /sistema_credenciales/index.php
+ErrorDocument 500 /sistema_credenciales/index.php
+
+# Configuración de PHP (si se puede sobreescribir)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# Redireccionar a index.php si el archivo no existe
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
+
+# Forzar HTTPS (opcional, descomentar si usas SSL)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
